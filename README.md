@@ -103,3 +103,14 @@ def chatbot_response(user_input, model, tokenizer, label_map, data):
 ## 📜 License
 This project is open-source and free to use under the MIT License.
 
+
+To add this to your Hugging Face model page, you can follow these steps:
+
+1. Go to the Hugging Face model page for your chatbot: [AI GENERATIVE](https://huggingface.co/TUHIN-PROGRAMMER/AI_GENARATIVE).
+2. Click on the "Edit" button.
+3. Copy and paste the above `README.md` into the description field.
+4. Save your changes.
+
+This will ensure your Hugging Face page is well-documented and ready for others to use! Let me know if you'd like further modifications or additions.
+
+
