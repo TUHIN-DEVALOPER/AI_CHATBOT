@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from autocorrect import Speller
 import math
 import os
+import sympy
 
 # Initialize spell checker
 spell = Speller(lang='en')
@@ -21,6 +22,13 @@ spell = Speller(lang='en')
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
+
+with open("data.json", "r", encoding="utf-8") as file:
+    data = json.load(file)
+
+for key, value in data.items():
+    if "hostel detail" in value.lower():
+        print(f"Found in: {key} → {value}")
 
 # Load and save data functions
 def load_data(file_path="data.json"):
@@ -33,9 +41,19 @@ def save_data(data, file_path="data.json"):
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
+def solve_math_query(query):
+    try:
+        query = query.replace("^", "**")  # Handle exponents
+        result = sympy.sympify(query).evalf()
+        return f"The answer is: {result}"
+    except Exception as e:
+        return f"Sorry, I couldn't solve that math problem. Error: {e}"
+
 # Text cleaning function
 def clean_text(text):
     text = text.lower()
+    if any(op in text for op in ['+', '-', '*', '/', '^']):  # Keep math expressions unchanged
+        return text
     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
     text = spell(text)
     stop_words = set(stopwords.words('english'))
@@ -44,6 +62,7 @@ def clean_text(text):
     lemmatizer = WordNetLemmatizer()
     tokens = [lemmatizer.lemmatize(word) for word in tokens]
     return " ".join(tokens)
+
 
 # Dataset class for chatbot
 class ChatbotDataset(Dataset):
@@ -144,11 +163,19 @@ def chatbot_response(user_input, model, tokenizer, label_map, data):
     if any(op in user_input for op in ['+', '-', '*', '/', '^']):
         return solve_math_query(user_input)
 
+    # Check if the input exists in stored data
     if user_input in data:
-        return data[user_input]
+        response = data[user_input]
 
+        # Filter out "For hostel detail..." responses
+        if "hostel detail" in response.lower():
+            return "I'm not sure. Can you clarify?"
+
+        return response
+
+    # Use AI model to generate response
     encoding = tokenizer.encode_plus(
-        user_input, add_special_tokens=True, max_length=128,
+        user_input, add_special_tokens=True, max_length=500,
         return_token_type_ids=False, padding='max_length', truncation=True,
         return_attention_mask=True, return_tensors='pt'
     )
